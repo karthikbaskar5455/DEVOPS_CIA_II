@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
   workflow_dispatch:
 
 # Image repository under GHCR built for this repo.
@@ -89,6 +89,10 @@ jobs:
     name: Deploy to AKS
     needs: build-and-push-image
     runs-on: ubuntu-latest
+    # Gated by a repo VARIABLE (Settings > Actions > Variables ENABLE_DEPLOY).
+    # Until that variable is set to 'true', this job is SKIPPED => pipeline is all-green
+    # for the first (cloudless) run. Set ENABLE_DEPLOY=true only once AKS exists.
+    if: vars.ENABLE_DEPLOY == 'true'
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
