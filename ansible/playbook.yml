@@ -1,0 +1,94 @@
+---
+# Deployment / configuration-management stage of the CI/CD pipeline.
+# Ansible is used for the "basic Ansible" requirement of the assignment:
+#    - configuration management  -> Jinja-templates the Kubernetes manifests
+#    - deployment automation      -> applies them with kubectl and verifies the
+#                                    live endpoint.
+- name: Render Kubernetes manifests
+  hosts: kube
+  connection: local
+  gather_facts: false
+  vars:
+    image: "{{ pipeline_image | default('ghcr.io/USER/REPLACE_WITH_REPO/java-cicd-app') }}"
+    tag: "{{ pipeline_tag | default('latest') }}"
+    app_name: "{{ pipeline_app_name | default('java-cicd-app') }}"
+    namespace: "{{ pipeline_namespace | default('devops-ns') }}"
+    replicas: "{{ pipeline_replicas | default(1) }}"
+
+  tasks:
+    - name: Render deployment manifest from the Jinja template
+      ansible.builtin.template:
+        src: "../k8s/deployment.yaml.j2"
+        dest: "../k8s/deployment.yaml"
+        mode: "0644"
+
+    - name: Render service manifest from the Jinja template
+      ansible.builtin.template:
+        src: "../k8s/service.yaml.j2"
+        dest: "../k8s/service.yaml"
+        mode: "0644"
+
+    - name: Render role binding manifest from the Jinja template
+      ansible.builtin.template:
+        src: "../k8s/rolebinding.yaml.j2"
+        dest: "../k8s/rolebinding.yaml"
+        mode: "0644"
+
+    - name: Log the deployment target
+      ansible.builtin.debug:
+        msg: "Will apply image {{ image }}:{{ tag }} into namespace {{ namespace }}"
+
+- name: Deploy to Azure Kubernetes Service
+  hosts: kube
+  connection: local
+  gather_facts: false
+  environment:
+    KUBECONFIG: "{{ lookup('env', 'KUBECONFIG') | default('.kubeconfig/', true) }}"
+  vars:
+    app_name: "{{ pipeline_app_name | default('java-cicd-app') }}"
+    namespace: "{{ pipeline_namespace | default('devops-ns') }}"
+
+  tasks:
+    - name: Apply the namespace manifest
+      ansible.builtin.command: kubectl apply -f k8s/namespace.yaml
+      register: ns_result
+      changed_when: "'configured' in ns_result.stdout or 'created' in ns_result.stdout"
+
+    - name: Apply the deployment manifest
+      ansible.builtin.command: kubectl apply -f k8s/deployment.yaml
+      register: deploy_result
+      changed_when: "'configured' in deploy_result.stdout or 'created' in deploy_result.stdout"
+
+    - name: Apply the service manifest
+      ansible.builtin.command: kubectl apply -f k8s/service.yaml
+      register: svc_result
+      changed_when: "'configured' in svc_result.stdout or 'created' in svc_result.stdout"
+
+    - name: Wait for rollout to complete
+      ansible.builtin.command: kubectl rollout status deployment/{{ app_name }} -n {{ namespace }} --timeout=240s
+      register: rollout_result
+      changed_when: false
+
+    - name: Get the LoadBalancer external IP
+      ansible.builtin.command: kubectl get svc {{ app_name }}-svc -n {{ namespace }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+      register: svc_ip
+      changed_when: false
+
+    - name: Verify the application endpoint serves the new version
+      ansible.builtin.uri:
+        url: "http://{{ svc_ip.stdout }}/api/info"
+        method: GET
+        return_content: true
+        validate_certs: false
+      register: app_resp
+
+    - name: Confirm the served version matches the deployed tag
+      ansible.builtin.assert:
+        that:
+          - "'{{ tag }}' in app_resp.content"
+        fail_msg: "Endpoint did not show tag {{ tag }}"
+        success_msg: "Endpoint verified: version {{ tag }} is live"
+
+    - name: Print the endpoint URL for the report
+      ansible.builtin.debug:
+        msg: "App is live at http://{{ svc_ip.stdout }}/ (version {{ tag }})"

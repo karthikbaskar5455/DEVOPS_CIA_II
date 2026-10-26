@@ -1,0 +1,41 @@
+# Ansible renders this template during the pipeline to point at the pushed image.
+# NOTE: {{ }} in this file is Jinja — this is the SOURCE template used by Ansible.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: java-cicd-app
+  namespace: devops-ns
+  labels:
+    app: java-cicd-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: java-cicd-app
+  template:
+    metadata:
+      labels:
+        app: java-cicd-app
+    spec:
+      containers:
+        - name: app
+          image: java-cicd-app:localtest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: APP_VERSION
+              value: "localtest"
+          readinessProbe:
+            httpGet:
+              path: /api/info
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

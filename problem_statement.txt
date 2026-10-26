@@ -1,0 +1,52 @@
+CIA 2
+Design and Implementation of an End-to-End Cloud-Based CI/CD Pipeline
+PROBLEM STATEMENT:
+A software development team wants to automate the process of building, testing, packaging, and deploying a Java web application. Currently, developers manually build the application, execute tests, create Docker images, and deploy the application. This process is time-consuming, error-prone, and difficult to reproduce.
+You are required to act as a DevOps engineer and design and implement a complete Continuous Integration and Continuous Deployment (CI/CD) pipeline using any one cloud provider, such as AWS, Microsoft Azure, or Google Cloud.
+Your solution must integrate Git for source-code management, Maven for building and testing the Java application, Docker for containerization, and Kubernetes for deployment and orchestration. You must configure an automated pipeline that triggers when code is pushed to the repository, builds the application, runs tests, creates a Docker image, publishes the image to a container registry, and deploys the application to a cloud-hosted Kubernetes environment.
+You may use Jenkins, GitHub Actions, GitLab CI/CD, or another suitable CI/CD platform. Basic Ansible knowledge should be applied wherever appropriate for configuration management or deployment automation.
+The final application must be accessible through a browser or an appropriate endpoint, and you must demonstrate that a code change can pass through the pipeline and reach the deployed application automatically.
+Your submission must include implementation evidence, pipeline configuration, deployment files, testing results, documentation, and a demonstration of the working solution.
+DELIVERABLES:
+    1. Source code repository
+    • Public or instructor-accessible Git repository.
+    • Java application source code and Maven pom.xml.
+    • Unit tests.
+    • Dockerfile and .dockerignore.
+    • Pipeline configuration file, such as Jenkinsfile or .github/workflows/ci-cd.yml.
+    • Kubernetes YAML manifests.
+    • Ansible playbook and inventory, if used.
+    2. CI/CD pipeline implementation
+       Submit the pipeline configuration and demonstrate its stages:
+    • Checkout source code.
+    • Compile and package using Maven.
+    • Run automated tests.
+    • Build and tag the Docker image.
+    • Push the image to the registry.
+    • Deploy or update the Kubernetes application.
+    • Verify deployment status and application availability.
+    3. Cloud deployment evidence (screenshots)
+    • Cloud resources and Kubernetes cluster.
+    • Container image in the registry.
+    • Kubernetes pods in the Running state and the deployment ready.
+    • Service endpoint and application running in a browser.
+    • A successful pipeline execution.
+    4. Change and redeployment demonstration
+       Demonstrate that:
+    • The change is committed and pushed to Git.
+    • The pipeline runs automatically.
+    • The new Docker image is built and published.
+    • Kubernetes runs the updated application.
+    • The change is visible at the application endpoint.
+    5. Technical report
+Submit a concise report of approximately 5–8 pages containing:
+    • Problem definition and architecture diagram.
+    • Tools selected and justification.
+    • CI/CD pipeline stages and their purpose.
+    • Cloud resources and deployment approach.
+    • Screenshots and test results.
+    • Challenges encountered and solutions.
+    • Security considerations and limitations.
+    6. Live demonstration and viva
+    • Demonstrate the end-to-end pipeline.
+    • Explain the configuration files.

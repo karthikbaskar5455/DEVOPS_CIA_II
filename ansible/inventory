@@ -1,0 +1,9 @@
+# Inventory for the CI/CD deployment stage (Ansible).
+# `k8s` runs against a placeholder localhost in CI; the real cluster is
+# accessed via kubectl + the current Azure/Set-Kubeconfig context.
+[all:vars]
+k8s_context=placeholder
+ansible_connection=local
+
+[kube]
+localhost ansible_connection=local

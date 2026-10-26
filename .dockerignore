@@ -1,0 +1,10 @@
+target/
+.git/
+.github/
+.idea/
+*.iml
+.DS_Store
+README.md
+ansible/
+k8s/
+*.md

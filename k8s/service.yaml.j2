@@ -1,0 +1,14 @@
+# Ansible renders this template during the pipeline.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ app_name }}-svc
+  namespace: {{ namespace }}
+spec:
+  type: LoadBalancer
+  selector:
+    app: {{ app_name }}
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
