@@ -47,20 +47,24 @@
   vars:
     app_name: "{{ pipeline_app_name | default('java-cicd-app') }}"
     namespace: "{{ pipeline_namespace | default('devops-ns') }}"
+    tag: "{{ pipeline_tag | default('latest') }}"
 
   tasks:
+    # NOTE: the command module resolves relative paths against the playbook's
+    # directory (ansible/), so use ../k8s/... to match the files rendered by the
+    # first play (which writes to ../k8s/ = repo-root k8s/).
     - name: Apply the namespace manifest
-      ansible.builtin.command: kubectl apply -f k8s/namespace.yaml
+      ansible.builtin.command: kubectl apply -f ../k8s/namespace.yaml
       register: ns_result
       changed_when: "'configured' in ns_result.stdout or 'created' in ns_result.stdout"
 
     - name: Apply the deployment manifest
-      ansible.builtin.command: kubectl apply -f k8s/deployment.yaml
+      ansible.builtin.command: kubectl apply -f ../k8s/deployment.yaml
       register: deploy_result
       changed_when: "'configured' in deploy_result.stdout or 'created' in deploy_result.stdout"
 
     - name: Apply the service manifest
-      ansible.builtin.command: kubectl apply -f k8s/service.yaml
+      ansible.builtin.command: kubectl apply -f ../k8s/service.yaml
       register: svc_result
       changed_when: "'configured' in svc_result.stdout or 'created' in svc_result.stdout"
 
