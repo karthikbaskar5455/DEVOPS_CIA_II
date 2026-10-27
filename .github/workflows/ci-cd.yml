@@ -95,6 +95,9 @@ jobs:
     # Until that variable is set to 'true', this job is SKIPPED => pipeline is all-green
     # for the first (cloudless) run. Set ENABLE_DEPLOY=true only once AKS exists.
     if: vars.ENABLE_DEPLOY == 'true'
+    permissions:
+      contents: read
+      packages: read   # so the pull secret's GITHUB_TOKEN can pull from GHCR
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -112,6 +115,18 @@ jobs:
 
       - name: Verify kubectl can reach the cluster
         run: kubectl version --client && kubectl get nodes
+
+      - name: Create namespace for the application
+        run: kubectl create namespace devops-ns --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Create GHCR image pull secret
+        run: |
+          kubectl create secret docker-registry ghcr-secret \
+            --namespace devops-ns \
+            --docker-server=ghcr.io \
+            --docker-username=${{ github.actor }} \
+            --docker-password=${{ secrets.GITHUB_TOKEN }} \
+            --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Install Ansible
         run: |

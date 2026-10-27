@@ -1,5 +1,5 @@
 # Ansible renders this template during the pipeline to point at the pushed image.
-# NOTE: {{ }} in this file is Jinja — this is the SOURCE template used by Ansible.
+# NOTE: double-brace expressions in this file are Jinja — the SOURCE template used by Ansible.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,6 +17,9 @@ spec:
       labels:
         app: {{ app_name }}
     spec:
+      # Pulls the private GHCR image using a secret created by the pipeline.
+      imagePullSecrets:
+        - name: ghcr-secret
       containers:
         - name: app
           image: {{ image }}:{{ tag }}
