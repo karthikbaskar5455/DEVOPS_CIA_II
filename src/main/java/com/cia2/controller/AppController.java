@@ -28,6 +28,9 @@ public class AppController {
     @Value("${app.version:local-dev}")
     private String appVersion;
 
+    @Value("${app.build:build-1}")
+    private String appBuild;
+
     private String hostname() {
         try {
             return InetAddress.getLocalHost().getHostName();
@@ -47,6 +50,7 @@ public class AppController {
                 + "</style></head><body>"
                 + "<h1>" + appName + "</h1>"
                 + "<p><span class='pill'>Deployed</span> <strong>Version:</strong> <code>" + appVersion + "</code></p>"
+                + "<p><span class='pill'>Release</span> <strong>Build:</strong> <code>" + appBuild + "</code></p>"
                 + "<div class='box'><p><b>Host:</b> " + hostname() + "</p>"
                 + "<p><b>Time:</b> " + OffsetDateTime.now().toString() + "</p>"
                 + "<p>JSON status: <a href='/api/info'>/api/info</a></p></div>"
@@ -58,6 +62,7 @@ public class AppController {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("app", appName);
         body.put("version", appVersion);
+        body.put("build", appBuild);
         body.put("hostname", hostname());
         body.put("timestamp", OffsetDateTime.now().toString());
         return body;

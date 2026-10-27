@@ -29,6 +29,8 @@ spec:
           env:
             - name: APP_VERSION
               value: "{{ tag }}"
+            - name: APP_BUILD
+              value: "pipelines/{{ tag[:7] }}"
           readinessProbe:
             httpGet:
               path: /api/info
