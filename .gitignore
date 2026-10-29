@@ -1,5 +1,6 @@
 target/
-screenshots/
+# Superseded early-draft captures; the final set lives in screenshots/new_updated/
+screenshots/archive_old/
 .idea/
 *.iml
 .vscode/

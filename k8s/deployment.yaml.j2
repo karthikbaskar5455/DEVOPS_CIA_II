@@ -17,9 +17,7 @@ spec:
       labels:
         app: {{ app_name }}
     spec:
-      # Pulls the private GHCR image using a secret created by the pipeline.
-      imagePullSecrets:
-        - name: ghcr-secret
+      # The GHCR image is PUBLIC, so no imagePullSecrets are required.
       containers:
         - name: app
           image: {{ image }}:{{ tag }}
