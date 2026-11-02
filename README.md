@@ -40,10 +40,13 @@ web application. The pipeline starts the moment a developer pushes code to the
 Azure Kubernetes Service (AKS) cluster**, reachable by a public IP address —
 no manual build, packaging, or deployment steps required.
 
-The pipeline combines the five technologies requested by the assignment:
+The pipeline combines the five technologies requested by the assignment
+plus a Gitleaks security scan:
 
 | Technology | Role in the pipeline |
 |---|---|
+| **GitHub Actions** | Orchestrates all stages automatically on every push |
+| **Gitleaks** | Scans for hardcoded secrets (API keys, tokens, passwords) before any build — fails fast |
 | **Maven** | Compiles, tests and packages the Java app into a JAR |
 | **Docker** | Builds a container image from that JAR |
 | **Kubernetes** | Runs and updates the app on Azure AKS; exposes a LoadBalancer endpoint |
@@ -130,8 +133,34 @@ the `< $5` estimate.
 The pipeline is defined in
 [`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml) and triggers
 `on: push: branches: [main, master]` plus manual `workflow_dispatch`. It has
-**three jobs**, each one a pipeline stage. The later stages only run if the
-earlier one succeeds.
+**four jobs**:
+
+| # | Job | Purpose |
+|---|---|---|
+| 0 | `security-gitleaks` | Scan source for hardcoded secrets before any resources are spent |
+| 1 | `build-and-test` | Maven compile + test + package |
+| 2 | `build-and-push-image` | Docker build + push to GHCR |
+| 3 | `deploy` | Azure login → Ansible render → kubectl apply → AKS |
+
+Each later job uses `needs: [<previous>]` so a failure at any stage stops the pipeline immediately.
+
+### Stage 0 — Gitleaks Secret Scan (security-gitleaks)
+```yaml
+- uses: actions/checkout@v4
+  with:
+    fetch-depth: 0   # Gitleaks needs full history
+
+- uses: gitleaks/gitleaks-action@v2
+  env:
+    GITLEAKS_CONFIG_PATH: gitleaks.toml
+```
+`gitleaks/gitleaks-action@v2` clones the repo and scans every file for known
+secret patterns (API keys, tokens, passwords, private keys). If any are found the
+pipeline **fails immediately** — no Maven build, no Docker push, no deploy. This
+prevents credential leaks from ever reaching the registry or cloud environment.
+The scan is configured via [`gitleaks.toml`](gitleaks.toml) which allowlists
+build artifacts (`target/`, `screenshots/`, generated k8s YAMLs) to avoid false
+positives.
 
 ### Stage 1 — Checkout, Build, Test (Maven)
 ```yaml
