@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, master ]
+    branches: ['*']      # triggers on master, main, and all feature branches
   pull_request:
     branches: [ main, master ]
   workflow_dispatch:
