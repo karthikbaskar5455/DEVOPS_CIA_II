@@ -2,6 +2,8 @@ name: CI/CD Pipeline
 
 on:
   push:
+    branches: ['**']      # triggers on master, main, and all feature branches
+  pull_request:
     branches: [ main, master ]
   workflow_dispatch:
 
@@ -12,9 +14,28 @@ env:
   APP_IMAGE: ghcr.io/karthikbaskar5455/devops_cia_ii/java-cicd-app
 
 jobs:
-  # ---------------- Stage 1: Checkout + Build + Test (Maven) ----------------
+  # ---- Stage 0: Security scan — catches hardcoded secrets BEFORE build resources are spent ----
+  security-gitleaks:
+    name: Gitleaks Secret Scan
+    runs-on: ubuntu-latest
+    # Runs on every push and PR so no secret ever reaches the registry
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # Gitleaks needs full history for accurate diffs
+
+      - name: Run Gitleaks scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITLEAKS_CONFIG_PATH: gitleaks.toml
+
+  # -------------------- Stage 1: Build + Test (Maven) --------------------
   build-and-test:
     name: Checkout, Build, Test (Maven)
+    needs: [security-gitleaks]   # only runs if Gitleaks found nothing
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -51,10 +72,10 @@ jobs:
           name: app-jar
           path: target/java-cicd-app.jar
 
-  # ------------- Stage 2: Build + tag Docker image + push to registry ---------
+  # --------------- Stage 2: Docker image → GitHub Container Registry ---------------
   build-and-push-image:
     name: Build & Push Docker Image to GHCR
-    needs: build-and-test
+    needs: [build-and-test]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -86,18 +107,18 @@ jobs:
       - name: Echo pushed image tag
         run: echo "Pushed ${{ env.APP_IMAGE }}:${{ github.sha }}"
 
-  # ---------------- Stage 3: Deploy to AKS via Ansible + kubectl -----------
+  # -------------------- Stage 3: Deploy to AKS via Ansible + kubectl --------------------
   deploy:
     name: Deploy to AKS
-    needs: build-and-push-image
+    needs: [build-and-push-image]
     runs-on: ubuntu-latest
-    # Gated by a repo VARIABLE (Settings > Actions > Variables ENABLE_DEPLOY).
-    # Until that variable is set to 'true', this job is SKIPPED => pipeline is all-green
-    # for the first (cloudless) run. Set ENABLE_DEPLOY=true only once AKS exists.
+    # Gated by a repo VARIABLE (Settings > Actions > Variables > ENABLE_DEPLOY = true).
+    # Until that variable is set, the deploy job is SKIPPED — pipeline is all-green
+    # for runs without a live cluster. Set to true once AKS is running.
     if: vars.ENABLE_DEPLOY == 'true'
     permissions:
       contents: read
-      packages: read   # so the pull secret's GITHUB_TOKEN can pull from GHCR
+      packages: read   # so the node can pull the public GHCR image
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4

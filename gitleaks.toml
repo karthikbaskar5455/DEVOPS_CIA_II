@@ -1,0 +1,33 @@
+# gitleaks.toml — Gitleaks configuration for DEVOPS_CIA_II
+# Docs: https://github.com/gitleaks/gitleaks
+#
+# This file runs on every `git push` via the `security-gitleaks` job.
+# Findings cause the pipeline to fail — preventing secrets from ever reaching
+# the container registry or cloud environment.
+
+[allowlist]
+description = "Known-safe paths and patterns in this repo"
+paths = [
+    # Build / IDE / cache artifacts
+    '''target/''',
+    '''\.git/''',
+    '''\.gradle/''',
+    '''node_modules/''',
+    '''\.m2/''',
+    # Screenshot captures (PNG bytes can match entropy patterns by accident)
+    '''screenshots/''',
+    # IDE and editor internals
+    '''\.vscode/''',
+    '''\.idea/''',
+    # Docker / k8s generated files
+    '''k8s/\w+\.yaml$''',          # rendered by Ansible during deploy
+    # Archive / superseded drafts
+    '''screenshots/archive_old/''',
+]
+
+# Known-safe placeholder values used in source config (not real secrets)
+[[rules]]
+id = "allow-env-placeholder"
+description = "Suppress known-safe placeholder env values in config files"
+regex = '''APP_(VERSION|BUILD|NAME)\s*[=:]\s*["']?(local|dev|test|placeholder|changeme)["']?'''
+path = '''(application.*\.properties|application.*\.yml|\.env|Dockerfile)'''
