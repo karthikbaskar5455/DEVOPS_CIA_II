@@ -1,4 +1,4 @@
-CIA 2
+DevOps CIA 2
 Design and Implementation of an End-to-End Cloud-Based CI/CD Pipeline
 PROBLEM STATEMENT:
 A software development team wants to automate the process of building, testing, packaging, and deploying a Java web application. Currently, developers manually build the application, execute tests, create Docker images, and deploy the application. This process is time-consuming, error-prone, and difficult to reproduce.
