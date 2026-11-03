@@ -50,3 +50,5 @@ Submit a concise report of approximately 5–8 pages containing:
     6. Live demonstration and viva
     • Demonstrate the end-to-end pipeline.
     • Explain the configuration files.
+UPDATE:
+Ma'am told everyone to include sonarcube or gitleaks in your web app project along with whatever you have done till now
